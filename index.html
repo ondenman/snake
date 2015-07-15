@@ -12,12 +12,12 @@
         transform: translate(-50%, -40%);
       }
       #error {
-        color: red;
+        colour: red;
       }
     </style>
   </head>
   <body>
-  <canvas id="game-canvas" width="900" height="600">
+  <canvas id="game-canvas" width="500" height="500">
     <div id="error">Oh no! I can't display the game. Please use a browser that supports HTML5 canvas!</div>
   </canvas>
     <script>
@@ -28,21 +28,33 @@
       var key;
       var keyReady = true;
       var positionX = (canvas.width/2)-(squareSize/2);
-      var positionY = canvas.height/2;
+      var positionY = canvas.height/2-(squareSize/2);
       var changeX = 0;
       var changeY = 0;
       var direction = 0;
       var colourA = "#000";
       var colourB = "#555";
+      var snakeColours = ["#1ABC9C",  //turqouise
+                          "#2ECC71",  //green
+                          "#3498DB",  //blue
+                          ];
+      var foodColours = [ "#F1C40F",  //yellow
+                          "#E67E22",  //orange
+                          "#E74C3C", //red
+                          ];
+
       var borderColour = "#aaa";
       var food = [];
-      var worm = [{    x: positionX,
+      var snake = [{    x: positionX,
                        y: positionY,
-                    fill: colourA,
+                    fill: snakeColours[0],
                   }];
 
       var isPlaying = false;
+      var gameOver = false;
 
+      var score = 0;
+      var level = 0;
       var levelNames = ["a", 
                         "ok", 
                         "dog", 
@@ -72,10 +84,16 @@
       for (var i=0; i<2; i++) {
         growWorm();
       }
+
+      var idleTimer = setInterval(idle, interval);
+      var idleKeyStrokes = [37,37,37,37,38,38,38,38,39,39,39,39,40,40,40,40]; //mimic user input before game starts
+      var idleCounter = 0;
       
       document.onkeydown = function (e) {
-          if (!isPlaying) {
+          if (!isPlaying && !gameOver) {
+            clearInterval(idleTimer);
             startTimer(interval);
+            layFood(true);
             isPlaying = true;
           }
           e = e || window.event;
@@ -92,36 +110,27 @@
         gameTimer = setInterval(gameUpdate, interval);
       }
 
+      function idle() {
+          clearPlayArea();
+          handleKey(idleKeyStrokes[idleCounter]);
+          if (idleCounter < idleKeyStrokes.length-1) {
+            idleCounter++;
+          } else {
+            idleCounter = 0;
+          }
+          moveWorm();
+          drawWorm();
+          drawPlayBorder();
+      }
+
+
+
       function handleKey(key) {
         // 37 = left
         // 38 = up
         // 39 = right
         // 40 = down
-        // switch(key) {
-        //   case 37:
-        //   console.log('we get here?');
-        //     setDirection(-squareSize,0);
-        //     direction = 'left';
-        //     break;
-
-        //   case 38:
-        //     setDirection(0,-squareSize);
-        //     direction = 'up';
-        //     break;
-
-        //   case 39:
-        //     setDirection(squareSize,0);
-        //     direction = 'right';
-        //     break;
-
-        //   case 40:
-        //     setDirection(0,squareSize);
-        //     direction = 'down';
-        //     break;
-        // }
-
         if (key === 37 && direction !== 'right') {
-          console.log('left');
             setDirection(-squareSize,0);
             direction = 'left';
         } else if (key === 38 && direction !== 'down') {
@@ -138,7 +147,7 @@
       }
 
       function setDirection(differenceX, differenceY) {
-          var head = worm[0];
+          var head = snake[0];
           changeX = differenceX;
           changeY = differenceY
           // changeX = differenceX;
@@ -146,25 +155,23 @@
       }
 
       function drawWorm() {
-          for (i in worm) {
-            context.fillStyle = worm[i].fill;
-          context.fillRect(worm[i].x, worm[i].y, squareSize, squareSize);
+          for (i in snake) {
+            context.fillStyle = snake[i].fill;
+            context.fillRect(snake[i].x, snake[i].y, squareSize, squareSize);
           }
       }
 
       function moveWorm(x, y) {
-          // positionX += changeX;
-          // positionY += changeY;
 
-          var head = worm[0];
+          var head = snake[0];
           head.x += changeX;
           head.y += changeY;
 
-          var i = worm.length-1;
+          var i = snake.length-1;
           while ( i > 0 ) {
-            var segment = worm[i];
-            var x = worm[i-1].x;
-            var y = worm[i-1].y;
+            var segment = snake[i];
+            var x = snake[i-1].x;
+            var y = snake[i-1].y;
             segment.x = x;
             segment.y = y;
             i--;
@@ -172,24 +179,34 @@
       }
 
       function growWorm() {
-        if (worm.length === 0){
-          var x = worm[0].x - squareSize;
-          var y = worm[0].y
-          var fillColor = worm[0].fill === colourA ? colourB : colourA;
+        if (snake.length == 0){
+          var x = snake[0].x - squareSize;
+          var y = snake[0].y
         } else {
-          var lastSegment = worm[worm.length-1];
+          var lastSegment = snake[snake.length-1];
           var x = lastSegment.x;
           var y = lastSegment.y;
-          var fillColor = lastSegment.fill === colourA ? colourB : colourA;
         }
+
+         do {
+          var fillColour = pickColour(snakeColours);
+        } while (fillColour == lastSegment.fill);
+
           var newSegment = {   x: x,
                                y: y,
-                            fill: fillColor }
-          worm.push(newSegment);
+                            fill: fillColour }
+          snake.push(newSegment);
+
       }
 
-      function layFood() {
-        var chance = Math.floor((Math.random() * 10) + 1);
+      function pickColour(colourArray) {
+        var random = Math.floor(Math.random()*snakeColours.length);
+        return colourArray[random];
+      }
+
+      function layFood(forceLay) {
+
+        var chance = forceLay ? 10 : Math.floor((Math.random() * 10) + 1);
 
         if (chance == 10) {
           var xGrid = canvas.width/squareSize;
@@ -198,18 +215,21 @@
           var xPos = Math.floor(Math.random() * xGrid + 1)*squareSize;
           var yPos = Math.floor(Math.random() * yGrid + 1)*squareSize;
           
-          var head = worm[0];
-          if (xPos == head.x && yPos == head.y) layFood(); // check whether new food will intersect worm's position
+          var head = snake[0];
+          if (xPos == head.x && yPos == head.y) layFood(); // check whether new food will intersect snakeColours's position
           for (i in food) {
             if (xPos == food[i].x && yPos == food[i].y) layFood(); // or position of existing food:
           }
 
-          food.push({x: xPos, y: yPos});
+          var fill = pickColour(foodColours);
+
+          food.push({x: xPos, y: yPos, fill: fill});
         }
       }
 
       function drawFood() {
         for (i in food) {
+          context.fillStyle = food[i].fill;
           context.fillRect(food[i].x,food[i].y, squareSize, squareSize);
         }
       }
@@ -227,19 +247,18 @@
       }
 
       function hasCollidedWithFood() {
-        var head = worm[0];
+        var head = snake[0];
 
         for (i in food) {
           if (food[i].x === head.x && food[i].y == head.y) {
             food.splice(i,1);
-            growWorm();
             return true;
           }
         }
       }
 
       function hasCollidedWithSelfOrEdge() {
-        var head = worm[0];
+        var head = snake[0];
 
         if (head.y < (0 + squareSize/2) ||
             head.y > (canvas.height - squareSize*1.5)) {
@@ -251,12 +270,24 @@
           return true;
         }
 
-        for (var i = 2; i < worm.length; i++) {
-          if (head.x == worm[i].x && head.y == worm[i].y) return true
+        for (var i = 2; i < snakeColours.length; i++) {
+          if (head.x == snakeColours[i].x && head.y == snakeColours[i].y) return true
         }
       }
 
       function increaseScore() {
+        score +=10;
+      }
+
+      function increaseSpeed() {
+          clearInterval(gameTimer);
+          interval = interval - 5;
+          startTimer(interval);
+          level++;
+          console.log(level);
+      }
+      
+      function updateStats() {
 
       }
 
@@ -275,7 +306,12 @@
           layFood();
           moveWorm();
           drawFood();
-          if (hasCollidedWithFood()) growWorm;
+          if (hasCollidedWithFood()) {
+            growWorm();
+            increaseScore();
+            if (score % 20 === 0) increaseSpeed();
+            if (score % 60 === 0) level++;
+          }
           drawWorm();
           drawPlayBorder();
 
@@ -284,7 +320,10 @@
             clearInterval(gameTimer);
             console.log('Game over!');
             isPlaying = false;
+            gameOver = true;
           }
+
+          updateStats();
 
       }
     </script>
