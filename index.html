@@ -5,7 +5,7 @@
         background-color: #bbb;
       }
       #game-canvas {
-        background-color: #eee;
+        background-color: #2C3E50;
         position: fixed;
         top: 40%;
         left: 50%;
@@ -80,9 +80,9 @@
       var interval = 160;
 
       drawPlayBorder();
-      drawWorm();
+      drawSnake();
       for (var i=0; i<2; i++) {
-        growWorm();
+        growSnake();
       }
 
       var idleTimer = setInterval(idle, interval);
@@ -118,8 +118,8 @@
           } else {
             idleCounter = 0;
           }
-          moveWorm();
-          drawWorm();
+          moveSnake();
+          drawSnake();
           drawPlayBorder();
       }
 
@@ -154,14 +154,14 @@
           // changeY = differenceY;
       }
 
-      function drawWorm() {
+      function drawSnake() {
           for (i in snake) {
             context.fillStyle = snake[i].fill;
             context.fillRect(snake[i].x, snake[i].y, squareSize, squareSize);
           }
       }
 
-      function moveWorm(x, y) {
+      function moveSnake(x, y) {
 
           var head = snake[0];
           head.x += changeX;
@@ -178,7 +178,7 @@
           }
       }
 
-      function growWorm() {
+      function growSnake() {
         if (snake.length == 0){
           var x = snake[0].x - squareSize;
           var y = snake[0].y
@@ -284,9 +284,8 @@
           interval = interval - 5;
           startTimer(interval);
           level++;
-          console.log(level);
       }
-      
+
       function updateStats() {
 
       }
@@ -304,15 +303,15 @@
           canvas.width = canvas.width;
           clearPlayArea();
           layFood();
-          moveWorm();
+          moveSnake();
           drawFood();
           if (hasCollidedWithFood()) {
-            growWorm();
+            growSnake();
             increaseScore();
             if (score % 20 === 0) increaseSpeed();
             if (score % 60 === 0) level++;
           }
-          drawWorm();
+          drawSnake();
           drawPlayBorder();
 
 
