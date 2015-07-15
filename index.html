@@ -1,8 +1,9 @@
 <html>
   <head>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>
     <style>
       body {
-        background-color: #bbb;
+        background-color: #34495E;
       }
       #game-canvas {
         background-color: #2C3E50;
@@ -24,14 +25,13 @@
       var canvas = document.getElementById("game-canvas");
       var context = canvas.getContext('2d');
       var squareSize = 20;
-
       var key;
-      var keyReady = true;
-      var positionX = (canvas.width/2)-(squareSize/2);
-      var positionY = canvas.height/2-(squareSize/2);
-      var changeX = 0;
-      var changeY = 0;
+      var idleCounter = 0;
+      var idleTimer = 0;
       var direction = 0;
+      var snake, food, changeX, changeY, positionX, positionY, keyReady, rank, score, gameTimer;
+      var hi = 0;
+      var interval;
       var colourA = "#000";
       var colourB = "#555";
       var snakeColours = ["#1ABC9C",  //turqouise
@@ -42,22 +42,21 @@
                           "#E67E22",  //orange
                           "#E74C3C", //red
                           ];
+      var gameOverBackgroundColor = "#C0392B";
+      var gameBackgroundColor = "#2C3E50";
+      var gameBackground = document.getElementById('game-canvas');
 
-      var borderColour = "#aaa";
-      var food = [];
-      var snake = [{    x: positionX,
-                       y: positionY,
-                    fill: snakeColours[0],
-                  }];
+      var borderColour =  "#34495E";
 
       var isPlaying = false;
       var gameOver = false;
 
-      var score = 0;
-      var level = 0;
-      var levelNames = ["a", 
-                        "ok", 
-                        "dog", 
+      var idleKeyStrokes = [37,37,37,37,38,38,38,38,
+                            39,39,39,39,40,40,40,40]; // mimic user input before game starts
+
+      var rankNames = ["a", 
+                        "be", 
+                        "sea", 
                         "lamp", 
                         "dusky", 
                         "planet", 
@@ -76,21 +75,18 @@
                         "incomprehensibility",
                         "electroencephalogram"];
 
-      var gameTimer;
-      var interval = 160;
+      setUpGame();
 
-      drawPlayBorder();
-      drawSnake();
-      for (var i=0; i<2; i++) {
-        growSnake();
-      }
+      function setUpGame() {
 
-      var idleTimer = setInterval(idle, interval);
-      var idleKeyStrokes = [37,37,37,37,38,38,38,38,39,39,39,39,40,40,40,40]; //mimic user input before game starts
-      var idleCounter = 0;
-      
-      document.onkeydown = function (e) {
-          if (!isPlaying && !gameOver) {
+        document.onkeydown = function (e) {
+          if (!isPlaying && !gameOver && handleKey(e.keyCode)) {
+            clearInterval(idleTimer);
+            startTimer(interval);
+            layFood(true);
+            isPlaying = true;
+          } else if (!isPlaying && gameOver && handleKey(e.keyCode)) {
+            setUpGame();
             clearInterval(idleTimer);
             startTimer(interval);
             layFood(true);
@@ -99,12 +95,41 @@
           e = e || window.event;
           key = keyReady ? e.keyCode : 0;
           handleKey(key);
-          keyReady = false;
+          keyReady = false; // register key press once only
       };
 
       document.onkeyup = function () {
         keyReady = true;
       }
+
+        clearPlayArea();
+        gameBackground.style.background = gameBackgroundColor;
+        score = 0;
+        rank = 0;
+        keyReady = true;
+        isPlaying = false;
+        gameOver = false;
+        positionX = canvas.width/2+(squareSize*2-squareSize/2);   // initial position
+        positionY = canvas.height/2+(squareSize-squareSize/2);  // of snake
+        changeX = 0;
+        changeY = 0;
+        direction = 0;
+        food = [];
+        snake = [{    x: positionX,
+                         y: positionY,
+                      fill: snakeColours[0],
+                    }];
+
+        drawStats();
+        interval = 160;
+        idleCounter = 0;
+        idleTimer = setInterval(idle, interval);
+        drawPlayBorder();
+        drawSnake();
+        for (var i=0; i<2; i++) {
+          growSnake();
+      }
+    }
 
       function startTimer(interval) {
         gameTimer = setInterval(gameUpdate, interval);
@@ -112,6 +137,7 @@
 
       function idle() {
           clearPlayArea();
+          drawStats();
           handleKey(idleKeyStrokes[idleCounter]);
           if (idleCounter < idleKeyStrokes.length-1) {
             idleCounter++;
@@ -124,7 +150,6 @@
       }
 
 
-
       function handleKey(key) {
         // 37 = left
         // 38 = up
@@ -133,17 +158,21 @@
         if (key === 37 && direction !== 'right') {
             setDirection(-squareSize,0);
             direction = 'left';
+            return true;
         } else if (key === 38 && direction !== 'down') {
             setDirection(0,-squareSize);
             direction = 'up';
+            return true;
         } else if (key === 39 && direction !== 'left') {
             setDirection(squareSize,0);
             direction = 'right';
+            return true;
         } else if (key === 40 && direction !== 'up') {
             setDirection(0,squareSize);
             direction = 'down';
+            return true;
         }
-
+            return false;
       }
 
       function setDirection(differenceX, differenceY) {
@@ -270,8 +299,8 @@
           return true;
         }
 
-        for (var i = 2; i < snakeColours.length; i++) {
-          if (head.x == snakeColours[i].x && head.y == snakeColours[i].y) return true
+        for (var i = 2; i < snake.length; i++) {
+          if (head.x == snake[i].x && head.y == snake[i].y) return true
         }
       }
 
@@ -283,23 +312,46 @@
           clearInterval(gameTimer);
           interval = interval - 5;
           startTimer(interval);
-          level++;
       }
 
-      function updateStats() {
+      function drawStats() {
 
+          context.font = "300 20px Lato";
+          context.fillStyle = "white";
+          var message = "Score: "+score
+          message = message.toUpperCase();
+          context.fillText(message, 40, 60);
+          message = "Hi: "+hi;
+          message = message.toUpperCase();
+          context.fillText(message, 170, 60);
+          message = " Rank: "+rankNames[rank];
+          message = message.toUpperCase();
+          context.fillText(message, 250, 60);
       }
+
+      function endGame() {
+        clearInterval(gameTimer);
+            isPlaying = true;
+            gameOver = true;
+            hi = hi < score ? score : hi;
+            gameBackground.style.background = gameOverBackgroundColor;
+            setTimeout( function(){
+                                  waitForKey();
+                                  }, 1000);
+      }
+
+      function waitForKey() {
+        document.onkeydown = function (e) {
+          if (!e) {
+            waitForKey();
+          } else {
+            setUpGame();
+          }
+      }
+    }
 
 
       function gameUpdate() {
-          // move stuff
-          // has collided
-          // end game or continue game
-          // update score & level & update speed
-          // Levels every *5:
-
-
-          // clear canvas
           canvas.width = canvas.width;
           clearPlayArea();
           layFood();
@@ -309,20 +361,12 @@
             growSnake();
             increaseScore();
             if (score % 20 === 0) increaseSpeed();
-            if (score % 60 === 0) level++;
+            if (score % 200 == 0) rank++;
           }
           drawSnake();
+          drawStats();
           drawPlayBorder();
-
-
-          if (hasCollidedWithSelfOrEdge()) {
-            clearInterval(gameTimer);
-            console.log('Game over!');
-            isPlaying = false;
-            gameOver = true;
-          }
-
-          updateStats();
+          if (hasCollidedWithSelfOrEdge()) endGame();
 
       }
     </script>
