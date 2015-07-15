@@ -1,0 +1,292 @@
+<html>
+  <head>
+    <style>
+      body {
+        background-color: #bbb;
+      }
+      #game-canvas {
+        background-color: #eee;
+        position: fixed;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -40%);
+      }
+      #error {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+  <canvas id="game-canvas" width="900" height="600">
+    <div id="error">Oh no! I can't display the game. Please use a browser that supports HTML5 canvas!</div>
+  </canvas>
+    <script>
+      var canvas = document.getElementById("game-canvas");
+      var context = canvas.getContext('2d');
+      var squareSize = 20;
+
+      var key;
+      var keyReady = true;
+      var positionX = (canvas.width/2)-(squareSize/2);
+      var positionY = canvas.height/2;
+      var changeX = 0;
+      var changeY = 0;
+      var direction = 0;
+      var colourA = "#000";
+      var colourB = "#555";
+      var borderColour = "#aaa";
+      var food = [];
+      var worm = [{    x: positionX,
+                       y: positionY,
+                    fill: colourA,
+                  }];
+
+      var isPlaying = false;
+
+      var levelNames = ["a", 
+                        "ok", 
+                        "dog", 
+                        "lamp", 
+                        "dusky", 
+                        "planet", 
+                        "kitchen", 
+                        "shopping", 
+                        "timetable",
+                        "springtime",
+                        "interesting",
+                        "happenstance",
+                        "imperceptible",
+                        "semiconducting",
+                        "totalitarianism",
+                        "misunderstanding",
+                        "spectrophotometer",
+                        "transmogrification",
+                        "incomprehensibility",
+                        "electroencephalogram"];
+
+      var gameTimer;
+      var interval = 160;
+
+      drawPlayBorder();
+      drawWorm();
+      for (var i=0; i<2; i++) {
+        growWorm();
+      }
+      
+      document.onkeydown = function (e) {
+          if (!isPlaying) {
+            startTimer(interval);
+            isPlaying = true;
+          }
+          e = e || window.event;
+          key = keyReady ? e.keyCode : 0;
+          handleKey(key);
+          keyReady = false;
+      };
+
+      document.onkeyup = function () {
+        keyReady = true;
+      }
+
+      function startTimer(interval) {
+        gameTimer = setInterval(gameUpdate, interval);
+      }
+
+      function handleKey(key) {
+        // 37 = left
+        // 38 = up
+        // 39 = right
+        // 40 = down
+        // switch(key) {
+        //   case 37:
+        //   console.log('we get here?');
+        //     setDirection(-squareSize,0);
+        //     direction = 'left';
+        //     break;
+
+        //   case 38:
+        //     setDirection(0,-squareSize);
+        //     direction = 'up';
+        //     break;
+
+        //   case 39:
+        //     setDirection(squareSize,0);
+        //     direction = 'right';
+        //     break;
+
+        //   case 40:
+        //     setDirection(0,squareSize);
+        //     direction = 'down';
+        //     break;
+        // }
+
+        if (key === 37 && direction !== 'right') {
+          console.log('left');
+            setDirection(-squareSize,0);
+            direction = 'left';
+        } else if (key === 38 && direction !== 'down') {
+            setDirection(0,-squareSize);
+            direction = 'up';
+        } else if (key === 39 && direction !== 'left') {
+            setDirection(squareSize,0);
+            direction = 'right';
+        } else if (key === 40 && direction !== 'up') {
+            setDirection(0,squareSize);
+            direction = 'down';
+        }
+
+      }
+
+      function setDirection(differenceX, differenceY) {
+          var head = worm[0];
+          changeX = differenceX;
+          changeY = differenceY
+          // changeX = differenceX;
+          // changeY = differenceY;
+      }
+
+      function drawWorm() {
+          for (i in worm) {
+            context.fillStyle = worm[i].fill;
+          context.fillRect(worm[i].x, worm[i].y, squareSize, squareSize);
+          }
+      }
+
+      function moveWorm(x, y) {
+          // positionX += changeX;
+          // positionY += changeY;
+
+          var head = worm[0];
+          head.x += changeX;
+          head.y += changeY;
+
+          var i = worm.length-1;
+          while ( i > 0 ) {
+            var segment = worm[i];
+            var x = worm[i-1].x;
+            var y = worm[i-1].y;
+            segment.x = x;
+            segment.y = y;
+            i--;
+          }
+      }
+
+      function growWorm() {
+        if (worm.length === 0){
+          var x = worm[0].x - squareSize;
+          var y = worm[0].y
+          var fillColor = worm[0].fill === colourA ? colourB : colourA;
+        } else {
+          var lastSegment = worm[worm.length-1];
+          var x = lastSegment.x;
+          var y = lastSegment.y;
+          var fillColor = lastSegment.fill === colourA ? colourB : colourA;
+        }
+          var newSegment = {   x: x,
+                               y: y,
+                            fill: fillColor }
+          worm.push(newSegment);
+      }
+
+      function layFood() {
+        var chance = Math.floor((Math.random() * 10) + 1);
+
+        if (chance == 10) {
+          var xGrid = canvas.width/squareSize;
+          var yGrid = canvas.height/squareSize;
+
+          var xPos = Math.floor(Math.random() * xGrid + 1)*squareSize;
+          var yPos = Math.floor(Math.random() * yGrid + 1)*squareSize;
+          
+          var head = worm[0];
+          if (xPos == head.x && yPos == head.y) layFood(); // check whether new food will intersect worm's position
+          for (i in food) {
+            if (xPos == food[i].x && yPos == food[i].y) layFood(); // or position of existing food:
+          }
+
+          food.push({x: xPos, y: yPos});
+        }
+      }
+
+      function drawFood() {
+        for (i in food) {
+          context.fillRect(food[i].x,food[i].y, squareSize, squareSize);
+        }
+      }
+
+      function clearPlayArea() {
+        canvas.width = canvas.width;
+      }
+
+      function drawPlayBorder() {
+        context.beginPath();
+        context.lineWidth=squareSize*2;
+        context.strokeStyle=borderColour;
+        context.rect(0,0,canvas.width,canvas.height); 
+        context.stroke();
+      }
+
+      function hasCollidedWithFood() {
+        var head = worm[0];
+
+        for (i in food) {
+          if (food[i].x === head.x && food[i].y == head.y) {
+            food.splice(i,1);
+            growWorm();
+            return true;
+          }
+        }
+      }
+
+      function hasCollidedWithSelfOrEdge() {
+        var head = worm[0];
+
+        if (head.y < (0 + squareSize/2) ||
+            head.y > (canvas.height - squareSize*1.5)) {
+          return true;
+        }
+
+       if (head.x < (0 + squareSize/2) ||
+            head.x > (canvas.width - squareSize*1.5)) {
+          return true;
+        }
+
+        for (var i = 2; i < worm.length; i++) {
+          if (head.x == worm[i].x && head.y == worm[i].y) return true
+        }
+      }
+
+      function increaseScore() {
+
+      }
+
+
+      function gameUpdate() {
+          // move stuff
+          // has collided
+          // end game or continue game
+          // update score & level & update speed
+          // Levels every *5:
+
+
+          // clear canvas
+          canvas.width = canvas.width;
+          clearPlayArea();
+          layFood();
+          moveWorm();
+          drawFood();
+          if (hasCollidedWithFood()) growWorm;
+          drawWorm();
+          drawPlayBorder();
+
+
+          if (hasCollidedWithSelfOrEdge()) {
+            clearInterval(gameTimer);
+            console.log('Game over!');
+            isPlaying = false;
+          }
+
+      }
+    </script>
+  </body>
+</html>
