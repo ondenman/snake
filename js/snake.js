@@ -10,8 +10,6 @@ window.onload = function() {
         idleCounter = 0,
         idleTimer = 0,
         direction = 0,
-        hi = 0,
-        hiRank = 0,
         snakeColours = ['#1ABC9C', //turqouise
                         '#2ECC71', //green
                         '#3498DB', //blue
@@ -39,6 +37,16 @@ window.onload = function() {
     var snake, food, changeX, changeY, positionX, positionY,
         keyReady, rank, score, gameTimer, gameOverMessage, key,
         interval;
+
+    var hi = readCookie('snake-game-hiscore')
+    if (!hi) {
+        hi = 0;
+    }
+
+    var hiRank = readCookie('snake-game-hirank')
+    if (!hiRank) {
+        hiRank = 0;
+    }
 
     setUpGame();
 
@@ -105,13 +113,13 @@ window.onload = function() {
     }
 
     function gameUpdate() {
+        if (hasCollidedWithSelfOrEdge()) {
+            endGame();
+        }
         canvas.width = canvas.width;
         clearPlayArea();
         drawSnake();
         layFood();
-        if (hasCollidedWithSelfOrEdge()) {
-            endGame();
-        }
         if (hasCollidedWithFood()) {
             growSnake();
             increaseScore();
@@ -311,6 +319,9 @@ window.onload = function() {
         hiRank = hiRank < rank ? rank : hiRank;
         gameBackground.style.background = gameOverBackgroundColour;
 
+        createCookie('snake-game-hiscore', hi, 60);
+        createCookie('snake-game-hirank', hiRank, 60);
+
         var y = canvas.height / 2;
         gameOverMessage = scrollMessage('key to continue ... Game over ... Press any ', y);
         setTimeout(function() {
@@ -392,6 +403,32 @@ window.onload = function() {
         moveSnake();
         drawSnake();
         drawPlayBorder();
+    }
+
+    function readCookie(name) {
+        name += "=";
+        var cookieArray = document.cookie.split(';');
+        for (var i in cookieArray) {
+            var cookie = cookieArray[i];
+            while (cookie.charAt(0) === ' ') {
+                cookie = cookie.substring(1,cookie.length);
+            }
+            if (cookie.indexOf(name) == 0) {
+                return cookie.substring(name.length, cookie.length);
+            }
+        }
+        return null;
+    }
+
+    function createCookie(name, value, days) {
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime()+(days*24*60*60*1000));
+            var expires = "; expires="+date.toGMTString();
+        } else {
+            var expires = "";
+        }
+        document.cookie = name+"="+value+expires+"; path=/";
     }
 
 };
