@@ -1,5 +1,6 @@
 <html>
   <head>
+    <title>Snake!</title>
     <link href='http://fonts.googleapis.com/css?family=Ubuntu+Mono' rel='stylesheet' type='text/css'>
     <style>
       body {
@@ -23,59 +24,58 @@
   </canvas>
     <script>
       window.onload = function () {
-        var canvas = document.getElementById("game-canvas");
-        var context = canvas.getContext('2d');
-        var displayFont = "Normal 16px 'Ubuntu Mono'";
-        var squareSize = 20;
-        var key;
-        var idleCounter = 0;
-        var idleTimer = 0;
-        var direction = 0;
-        var snake, food, changeX, changeY, positionX, positionY, keyReady, rank, score, gameTimer;
-        var hi = 0;
-        var hiRank = 0;
-        var interval;
-        var colourA = "#000";
-        var colourB = "#555";
-        var snakeColours = ["#1ABC9C",  //turqouise
+        var canvas = document.getElementById("game-canvas"),
+            context = canvas.getContext('2d'),
+            displayFont = "Normal 16px 'Ubuntu Mono'",
+            pixelSize = 20,
+            idleCounter = 0,
+            idleTimer = 0,
+            direction = 0,
+            hi = 0,
+            hiRank = 0,
+            colourA = "#000",
+            colourB = "#555";
+            snakeColours = ["#1ABC9C",  //turqouise
                             "#2ECC71",  //green
                             "#3498DB",  //blue
-                            ];
-        var foodColours = [ "#F1C40F",  //yellow
+                            ],
+            foodColours = [ "#F1C40F",  //yellow
                             "#E67E22",  //orange
                             "#E74C3C",  //red
-                            ];
-        var gameOverBackgroundColour = "#C0392B";
-        var gameBackgroundColour = "#2C3E50";
-        var scoreColour = "#ecf0f1";
-        var gameBackground = document.getElementById('game-canvas');
-
-        var borderColour =  "#34495E";
-
-        var isPlaying = false;
-        var gameOver = false;
-
-        var idleKeyStrokes = [37,37,37,37,38,38,38,38,
-                              39,39,39,39,40,40,40,40]; // mimic user when game is idle
-
-        var rankNames = [ "worm",
+                            ],
+            gameOverBackgroundColour = "#C0392B",
+            gameBackgroundColour = "#2C3E50",
+            textColour = "#ecf0f1",
+            gameBackground = document.getElementById('game-canvas'),
+            borderColour =  "#34495E",
+            isPlaying = false,
+            gameOver = false,
+            idleKeyStrokes = [37,37,37,37,38,38,38,38,
+                              39,39,39,39,40,40,40,40], // mimic user when game is idle
+            rankNames = [ "worm",
+                          "centipede",
+                          "millipede",
                           "boa",
-                          "sidewinder",
                           "python",
                           "king cobra"
                          ];
+        var snake, food, changeX, changeY, positionX, positionY, 
+            keyReady, rank, score, gameTimer, gameOverMessage, key,
+            interval;
 
         setUpGame();
 
         function setUpGame() {
 
           document.onkeydown = function (e) {
-            if (!isPlaying && !gameOver && handleKey(e.keyCode)) {
+            if (!isPlaying && !gameOver && (e.keyCode >= 37 && e.keyCode <= 40)) {
               clearInterval(idleTimer);
               startTimer(interval);
-              layFood(true);
+              for (var i = 0; i < 10; i++) { // populate the board with some food
+                layFood(true);
+              }
               isPlaying = true;
-            } else if (!isPlaying && gameOver && handleKey(e.keyCode)) {
+            } else if (!isPlaying && gameOver && (e.keyCode >= 37 && e.keyCode <= 40)) {
               setUpGame();
               clearInterval(idleTimer);
               startTimer(interval);
@@ -84,6 +84,7 @@
             }
             e = e || window.event;
             key = keyReady ? e.keyCode : 0;
+            // key = e.keyCode;
             handleKey(key);
             keyReady = false; // register key press once only
         };
@@ -99,8 +100,8 @@
           keyReady = true;
           isPlaying = false;
           gameOver = false;
-          positionX = canvas.width/2+(squareSize*2-squareSize/2);   // initial position
-          positionY = canvas.height/2+(squareSize-squareSize/2);  // of snake
+          positionX = canvas.width/2+(pixelSize*2-pixelSize/2);   // initial position
+          positionY = canvas.height/2+(pixelSize-pixelSize/2);  // of snake
           changeX = 0;
           changeY = 0;
           direction = 0;
@@ -128,6 +129,7 @@
         function idle() {
             clearPlayArea();
             drawStats();
+            showMessage("Control snake with cursor keys", canvas.height-60);
             handleKey(idleKeyStrokes[idleCounter]);
             if (idleCounter < idleKeyStrokes.length-1) {
               idleCounter++;
@@ -141,45 +143,27 @@
 
 
         function handleKey(key) {
-          // 37 = left
-          // 38 = up
-          // 39 = right
-          // 40 = down
-          if (key === 37 && direction !== 'right') {
-              setDirection(-squareSize,0);
+          if (key === 37 && direction !== 'right') {        // 37 = left
+              setDirection(-pixelSize,0);
               direction = 'left';
-              return true;
-          } else if (key === 38 && direction !== 'down') {
-              setDirection(0,-squareSize);
+          } else if (key === 38 && direction !== 'down') {  // 38 = up
+              setDirection(0,-pixelSize);
               direction = 'up';
-              return true;
-          } else if (key === 39 && direction !== 'left') {
-              setDirection(squareSize,0);
+          } else if (key === 39 && direction !== 'left') {  // 39 = right
+              setDirection(pixelSize,0);
               direction = 'right';
-              return true;
-          } else if (key === 40 && direction !== 'up') {
-              setDirection(0,squareSize);
+          } else if (key === 40 && direction !== 'up') {    // 40 = down
+              setDirection(0,pixelSize);
               direction = 'down';
-              return true;
           }
-              return false;
         }
 
         function setDirection(differenceX, differenceY) {
-            var head = snake[0];
             changeX = differenceX;
             changeY = differenceY
         }
 
-        function drawSnake() {
-            for (i in snake) {
-              context.fillStyle = snake[i].fill;
-              context.fillRect(snake[i].x, snake[i].y, squareSize, squareSize);
-            }
-        }
-
         function moveSnake(x, y) {
-
             var head = snake[0];
             head.x += changeX;
             head.y += changeY;
@@ -195,15 +179,17 @@
             }
         }
 
+        function drawSnake() {
+            for (i in snake) {
+              context.fillStyle = snake[i].fill;
+              context.fillRect(snake[i].x, snake[i].y, pixelSize, pixelSize);
+            }
+        }
+
         function growSnake() {
-          if (snake.length == 0){
-            var x = snake[0].x - squareSize;
-            var y = snake[0].y
-          } else {
             var lastSegment = snake[snake.length-1];
             var x = lastSegment.x;
             var y = lastSegment.y;
-          }
 
            do {
             var fillColour = pickColour(snakeColours);
@@ -226,11 +212,11 @@
           var chance = forceLay ? 10 : Math.floor((Math.random() * 10) + 1);
 
           if (chance == 10) {
-            var xGrid = canvas.width/squareSize;
-            var yGrid = canvas.height/squareSize;
+            var xGrid = canvas.width/pixelSize;
+            var yGrid = canvas.height/pixelSize;
 
-            var xPos = Math.floor(Math.random() * xGrid + 1)*squareSize;
-            var yPos = Math.floor(Math.random() * yGrid + 1)*squareSize;
+            var xPos = Math.floor(Math.random() * xGrid + 1)*pixelSize;
+            var yPos = Math.floor(Math.random() * yGrid + 1)*pixelSize;
             
             var head = snake[0];
             if (xPos == head.x && yPos == head.y) layFood(); // check whether new food will intersect snakeColours's position
@@ -247,7 +233,7 @@
         function drawFood() {
           for (i in food) {
             context.fillStyle = food[i].fill;
-            context.fillRect(food[i].x,food[i].y, squareSize, squareSize);
+            context.fillRect(food[i].x,food[i].y, pixelSize, pixelSize);
           }
         }
 
@@ -257,7 +243,7 @@
 
         function drawPlayBorder() {
           context.beginPath();
-          context.lineWidth=squareSize*2;
+          context.lineWidth=pixelSize*2;
           context.strokeStyle=borderColour;
           context.rect(0,0,canvas.width,canvas.height); 
           context.stroke();
@@ -277,13 +263,13 @@
         function hasCollidedWithSelfOrEdge() {
           var head = snake[0];
 
-          if (head.y < (0 + squareSize/2) ||
-              head.y > (canvas.height - squareSize*1.5)) {
+          if (head.y < (0 + pixelSize/2) ||
+              head.y > (canvas.height - pixelSize*1.5)) {
             return true;
           }
 
-         if (head.x < (0 + squareSize/2) ||
-              head.x > (canvas.width - squareSize*1.5)) {
+         if (head.x < (0 + pixelSize/2) ||
+              head.x > (canvas.width - pixelSize*1.5)) {
             return true;
           }
 
@@ -305,7 +291,7 @@
         function drawStats() {
 
             context.font = displayFont;
-            context.fillStyle = scoreColour;
+            context.fillStyle = textColour;
             var x = 40;
             var y = 50;
             var message = "Score "+score
@@ -316,7 +302,7 @@
             message = message.toUpperCase();
             context.fillText(message, x+180, y);
 
-            message = "Rank "+rankNames[rank];
+            message = "Rank  "+rankNames[rank];
             message = message.toUpperCase();
             context.fillText(message, x, y+20);
 
@@ -332,9 +318,48 @@
               hi = hi < score ? score : hi;
               hiRank = hiRank < rank ? rank : hiRank;
               gameBackground.style.background = gameOverBackgroundColour;
+
+              var y = canvas.height-60;
+              gameOverMessage = scrollMessage("Game over ... Press any key to continue ...", y);
               setTimeout( function(){
                                     waitForKey();
                                     }, 1000);
+        }
+
+        function scrollMessage(message, height) {
+          message = message.toUpperCase();
+          var banner = message.split('');
+          context.font = displayFont;
+          var x = canvas.width;
+          var position = 20;
+          var charWidth = 10;
+          var bannerLength = banner.length * charWidth;
+          if (canvas.width < bannerLength) {
+            var padding = (canvas.width - bannerLength)/charWidth;
+            for (i in padding) {
+              banner.push(' ');
+            }
+          }
+          var bannerSpeed = 200;
+
+          return setInterval(function (){
+            context.clearRect(20, height-14, canvas.width-40, 16);
+
+            for (i in banner) {
+              var character = banner[i];
+              context.fillStyle = textColour;
+              context.fillText(character, position, height);
+              position = position > canvas.width-40 ? position = 20 : position + charWidth;
+            }
+          }, bannerSpeed);
+        }
+
+        function showMessage(message, height) {
+          message = message.toUpperCase();
+          context.font = displayFont;
+          context.fillStyle = textColour;
+          context.textAlign="center"; 
+          context.fillText(message, canvas.width/2, height);
         }
 
         function waitForKey() {
@@ -342,6 +367,7 @@
             if (!e) {
               waitForKey();
             } else {
+              clearInterval(gameOverMessage);
               setUpGame();
             }
         }
@@ -351,22 +377,21 @@
         function gameUpdate() {
             canvas.width = canvas.width;
             clearPlayArea();
+            drawSnake();
             layFood();
-            moveSnake();
-            drawFood();
+            if (hasCollidedWithSelfOrEdge()) endGame();
             if (hasCollidedWithFood()) {
               growSnake();
               increaseScore();
               if (score % 40 === 0) increaseSpeed();
               if (score % 240 === 0) {
                 rank = rank > rankNames.length-2 ? rankNames.length-1 : rank+=1;
-                console.log(rank);
               }
             }
-            drawSnake();
+            moveSnake();
+            drawFood();
             drawStats();
             drawPlayBorder();
-            if (hasCollidedWithSelfOrEdge()) endGame();
 
         }
       }
