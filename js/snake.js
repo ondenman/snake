@@ -1,40 +1,40 @@
+'use strict';
+
 window.onload = function () {
 
-        var canvas = document.getElementById("snake-container");
+        var canvas = document.getElementById('snake-container');
 
         var context = canvas.getContext('2d'),
-            displayFont = "Normal 16px 'Ubuntu Mono'",
+            displayFont = 'Normal 16px "Ubuntu Mono"',
             pixelSize = 20,
             idleCounter = 0,
             idleTimer = 0,
             direction = 0,
             hi = 0,
             hiRank = 0,
-            colourA = "#000",
-            colourB = "#555";
-            snakeColours = ["#1ABC9C",  //turqouise
-                            "#2ECC71",  //green
-                            "#3498DB",  //blue
+            snakeColours = ['#1ABC9C',  //turqouise
+                            '#2ECC71',  //green
+                            '#3498DB',  //blue
                             ],
-            foodColours = [ "#F1C40F",  //yellow
-                            "#E67E22",  //orange
-                            "#E74C3C",  //red
+            foodColours = [ '#F1C40F',  //yellow
+                            '#E67E22',  //orange
+                            '#E74C3C',  //red
                             ],
-            gameOverBackgroundColour = "#C0392B",
-            textColour = "#ecf0f1",
-            gameBackgroundColour = "#2C3E50";
+            gameOverBackgroundColour = '#C0392B',
+            textColour = '#ecf0f1',
+            gameBackgroundColour = '#2C3E50',
             gameBackground = canvas,
-            borderColour =  "#34495E",
+            borderColour =  '#34495E',
             isPlaying = false,
             gameOver = false,
             idleKeyStrokes = [37,37,37,37,38,38,38,38,
                               39,39,39,39,40,40,40,40], // mimic user when game is idle
-            rankNames = [ "worm",
-                          "centipede",
-                          "millipede",
-                          "boa",
-                          "python",
-                          "king cobra"
+            rankNames = [ 'worm',
+                          'centipede',
+                          'millipede',
+                          'boa',
+                          'python',
+                          'king cobra'
                          ];
         var snake, food, changeX, changeY, positionX, positionY, 
             keyReady, rank, score, gameTimer, gameOverMessage, key,
@@ -96,7 +96,7 @@ window.onload = function () {
 
         document.onkeyup = function () {
           keyReady = true;
-        }
+        };
       }
 
         function startTimer(interval) {
@@ -106,8 +106,8 @@ window.onload = function () {
         function idle() {
             clearPlayArea();
             drawStats();
-            showMessage("Control snake with cursor keys", canvas.height-60);
-            showMessage("Press any key to start", canvas.height-80);
+            showMessage('Control snake with cursor keys', canvas.height-60);
+            showMessage('Press any key to start', canvas.height-80);
             handleKey(idleKeyStrokes[idleCounter]);
             if (idleCounter < idleKeyStrokes.length-1) {
               idleCounter++;
@@ -138,10 +138,10 @@ window.onload = function () {
 
         function setDirection(differenceX, differenceY) {
             changeX = differenceX;
-            changeY = differenceY
+            changeY = differenceY;
         }
 
-        function moveSnake(x, y) {
+        function moveSnake() {
             var head = snake[0],
                 i = snake.length-1;
 
@@ -149,35 +149,37 @@ window.onload = function () {
             head.y += changeY;
 
             while ( i > 0 ) {
-              var segment = snake[i],
-                  x = snake[i-1].x,
-                  y = snake[i-1].y;
+              var segment = snake[i];
+              var newX = snake[i-1].x,
+                  newY = snake[i-1].y;
 
-              segment.x = x;
-              segment.y = y;
+              segment.x = newX;
+              segment.y = newY;
               i--;
             }
         }
 
         function drawSnake() {
-            for (i in snake) {
+            for (var i in snake) {
               context.fillStyle = snake[i].fill;
               context.fillRect(snake[i].x, snake[i].y, pixelSize, pixelSize);
             }
         }
 
         function growSnake() {
-            var lastSegment = snake[snake.length-1],
-                x = lastSegment.x,
-                y = lastSegment.y;
+          var lastSegment = snake[snake.length-1],
+              x = lastSegment.x,
+              y = lastSegment.y;
 
-           do {
-            var fillColour = pickColour(snakeColours);
-          } while (fillColour == lastSegment.fill);
+          var fillColour;
+
+          do {
+            fillColour = pickColour(snakeColours);
+          } while (fillColour === lastSegment.fill);
 
             var newSegment = {   x: x,
                                  y: y,
-                              fill: fillColour }
+                              fill: fillColour };
             snake.push(newSegment);
 
         }
@@ -191,19 +193,18 @@ window.onload = function () {
 
           var chance = forceLay ? 10 : Math.floor((Math.random() * 10) + 1);
 
-          if (chance == 10) {
+          if (chance === 10) {
             var xGrid = canvas.width/pixelSize,
-                yGrid = canvas.height/pixelSize,
+                yGrid = canvas.height/pixelSize;
 
-                xPos = Math.floor(Math.random() * xGrid + 1)*pixelSize,
+            var xPos = Math.floor(Math.random() * xGrid + 1)*pixelSize,
                 yPos = Math.floor(Math.random() * yGrid + 1)*pixelSize;
-            
-          }
+  
 
           var head = snake[0];
 
-          if (xPos == head.x && yPos == head.y) return false; // bail out if food overlaps snake's head
-          for (i in food) {                                   // bail out if food overlaps existing food
+          if (xPos === head.x && yPos === head.y) { return false; } // bail out if food overlaps snake's head
+          for (var i in food) {                                         // bail out if food overlaps existing food
             if (xPos === food[i].x && yPos === food[i].y) {
             return false;
             }
@@ -213,9 +214,10 @@ window.onload = function () {
 
             food.push({x: xPos, y: yPos, fill: fill});
         }
+      }
 
         function drawFood() {
-          for (i in food) {
+          for (var i in food) {
             context.fillStyle = food[i].fill;
             context.fillRect(food[i].x,food[i].y, pixelSize, pixelSize);
           }
@@ -236,8 +238,8 @@ window.onload = function () {
         function hasCollidedWithFood() {
           var head = snake[0];
 
-          for (i in food) {
-            if (food[i].x === head.x && food[i].y == head.y) {
+          for (var i in food) {
+            if (food[i].x === head.x && food[i].y === head.y) {
               food.splice(i,1);
               return true;
             }
@@ -258,7 +260,7 @@ window.onload = function () {
           }
 
           for (var i = 2; i < snake.length; i++) {
-            if (head.x == snake[i].x && head.y == snake[i].y) return true
+            if (head.x === snake[i].x && head.y === snake[i].y) { return true; }
           }
         }
 
@@ -278,19 +280,19 @@ window.onload = function () {
           var x = 40,
               y = 50;
 
-          var message = "Score "+score
+          var message = 'Score '+score;
           message = message.toUpperCase();
           context.fillText(message, x, y);
 
-          message = "Hi "+hi;
+          message = 'Hi '+hi;
           message = message.toUpperCase();
           context.fillText(message, x+180, y);
 
-          message = "Rank  "+rankNames[rank];
+          message = 'Rank  '+rankNames[rank];
           message = message.toUpperCase();
           context.fillText(message, x, y+20);
 
-          message = "Hi Rank  "+rankNames[hiRank];
+          message = 'Hi Rank  '+rankNames[hiRank];
           message = message.toUpperCase();
           context.fillText(message, x+180, y+20);
         }
@@ -304,7 +306,7 @@ window.onload = function () {
           gameBackground.style.background = gameOverBackgroundColour;
 
           var y = canvas.height/2;
-          gameOverMessage = scrollMessage("Game over ... Press any key to continue ... ", y);
+          gameOverMessage = scrollMessage('key to continue ... Game over ... Press any ', y);
           setTimeout( function(){
                                 waitForKey();
                                 }, 1000);
@@ -313,19 +315,18 @@ window.onload = function () {
         function scrollMessage(message, height) {
           context.font = displayFont;
 
-          var message = message.toUpperCase(),
-              banner = message.split(''),
-              x = canvas.width,
+          message = message.toUpperCase();
+
+          var banner = message.split(''),
               startPosition = 40,
               charWidth = 10,
-              bannerLength = banner.length * charWidth,
               bannerSpeed = 120;
 
           return setInterval(function (){
             context.clearRect(20, height-14, canvas.width-40, 16);
-            position = startPosition;
+            var position = startPosition;
 
-            for (i in banner) {
+            for (var i in banner) {
               var character = banner[i];
               context.fillStyle = textColour;
               if (position < canvas.width-40) {
@@ -344,7 +345,7 @@ window.onload = function () {
           message = message.toUpperCase();
           context.font = displayFont;
           context.fillStyle = textColour;
-          context.textAlign="center"; 
+          context.textAlign='center'; 
           context.fillText(message, canvas.width/2, height);
         }
 
@@ -356,7 +357,7 @@ window.onload = function () {
               clearInterval(gameOverMessage);
               setUpGame();
             }
-        }
+        };
       }
 
         function gameUpdate() {
@@ -364,11 +365,11 @@ window.onload = function () {
           clearPlayArea();
           drawSnake();
           layFood();
-          if (hasCollidedWithSelfOrEdge()) endGame();
+          if (hasCollidedWithSelfOrEdge()) { endGame(); }
           if (hasCollidedWithFood()) {
             growSnake();
             increaseScore();
-            if (score % 40 === 0) increaseSpeed();
+            if (score % 40 === 0) { increaseSpeed(); }
             if (score % 240 === 0) {
               rank = rank > rankNames.length-2 ? rankNames.length-1 : rank+=1;
             }
@@ -378,4 +379,4 @@ window.onload = function () {
           drawStats();
           drawPlayBorder();
         }
-      }
+      };
