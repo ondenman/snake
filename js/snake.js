@@ -118,6 +118,7 @@ window.onload = function() {
         }
         canvas.width = canvas.width;
         clearPlayArea();
+        drawFood();
         drawSnake();
         layFood();
         if (hasCollidedWithFood()) {
@@ -131,7 +132,6 @@ window.onload = function() {
             }
         }
         moveSnake();
-        drawFood();
         drawStats();
         drawPlayBorder();
     }
@@ -208,7 +208,6 @@ window.onload = function() {
     }
 
     function layFood(forceLay) {
-
         var chance = forceLay ? 10 : Math.floor((Math.random() * 10) + 1);
 
         if (chance === 10) {
@@ -393,7 +392,6 @@ window.onload = function() {
         clearPlayArea();
         drawStats();
         showMessage('Control snake with cursor keys', canvas.height - 60);
-        showMessage('Press any key to start', canvas.height - 80);
         handleKey(idleKeyStrokes[idleCounter]);
         if (idleCounter < idleKeyStrokes.length - 1) {
             idleCounter++;
