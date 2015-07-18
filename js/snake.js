@@ -38,12 +38,12 @@ window.onload = function() {
         keyReady, rank, score, gameTimer, gameOverMessage, key,
         interval;
 
-    var hi = readCookie('snake-game-hiscore')
+    var hi = readCookie('snake-game-hiscore');
     if (!hi) {
         hi = 0;
     }
 
-    var hiRank = readCookie('snake-game-hirank')
+    var hiRank = readCookie('snake-game-hirank');
     if (!hiRank) {
         hiRank = 0;
     }
@@ -51,7 +51,6 @@ window.onload = function() {
     setUpGame();
 
     function setUpGame() {
-
         score = 0;
         rank = 0;
         keyReady = true;
@@ -77,10 +76,6 @@ window.onload = function() {
         drawStats();
         idleTimer = setInterval(idle, interval);
         drawPlayBorder();
-        drawSnake();
-        for (var i = 0; i < 2; i++) {
-            growSnake();
-        }
 
         document.onkeydown = function(e) {
             if (!isPlaying && !gameOver && (e.keyCode >= 37 && e.keyCode <= 40)) {
@@ -113,14 +108,13 @@ window.onload = function() {
     }
 
     function gameUpdate() {
-        if (hasCollidedWithSelfOrEdge()) {
-            endGame();
-        }
-        canvas.width = canvas.width;
+        layFood();
         clearPlayArea();
         drawFood();
-        drawSnake();
-        layFood();
+        moveSnake();
+        drawStats();
+        drawPlayBorder();
+
         if (hasCollidedWithFood()) {
             growSnake();
             increaseScore();
@@ -131,35 +125,33 @@ window.onload = function() {
                 rank = rank > rankNames.length - 2 ? rankNames.length - 1 : rank += 1;
             }
         }
-        moveSnake();
-        drawStats();
-        drawPlayBorder();
+        if (hasCollidedWithSelfOrEdge()) {
+            endGame();
+        }
     }
 
     function handleKey(key) {
-        if (key === 37 && direction !== 'right') { // 37 = left
+        if (key === 37) { // 37 = left
             setDirection(-pixelSize, 0);
-            direction = 'left';
-        } else if (key === 38 && direction !== 'down') { // 38 = up
+        } else if (key === 38) { // 38 = up
             setDirection(0, -pixelSize);
-            direction = 'up';
-        } else if (key === 39 && direction !== 'left') { // 39 = right
+        } else if (key === 39) { // 39 = right
             setDirection(pixelSize, 0);
-            direction = 'right';
-        } else if (key === 40 && direction !== 'up') { // 40 = down
+        } else if (key === 40) { // 40 = down
             setDirection(0, pixelSize);
-            direction = 'down';
         }
     }
 
     function setDirection(differenceX, differenceY) {
-        changeX = differenceX;
-        changeY = differenceY;
+        changeX = differenceX + changeX !== 0 ? differenceX : changeX;
+        changeY = differenceY + changeY !== 0 ? differenceY : changeY;
     }
 
     function moveSnake() {
         var head = snake[0],
             i = snake.length - 1;
+            
+        drawSnake(head);
 
         head.x += changeX;
         head.y += changeY;
@@ -171,22 +163,25 @@ window.onload = function() {
 
             segment.x = newX;
             segment.y = newY;
+            drawSnake(segment);
             i--;
         }
+
     }
 
-    function drawSnake() {
-        for (var i in snake) {
-            context.fillStyle = snake[i].fill;
-            context.fillRect(snake[i].x, snake[i].y, pixelSize, pixelSize);
-        }
+    function drawSnake(segment) {
+            context.fillStyle = segment.fill;
+            context.fillRect(segment.x, segment.y, pixelSize, pixelSize);
     }
 
     function growSnake() {
-        var lastSegment = snake[snake.length - 1],
-            x = lastSegment.x,
-            y = lastSegment.y;
+        console.log(snake.length);
 
+        var lastSegment = snake[snake.length - 1]
+
+        var x = lastSegment.x - changeX,
+            y = lastSegment.y - changeY;
+        
         var fillColour;
 
         do {
@@ -342,7 +337,6 @@ window.onload = function() {
 
     function scrollMessage(message, height) {
         context.font = displayFont;
-
         message = message.toUpperCase();
 
         var banner = message.split(''),
@@ -389,6 +383,9 @@ window.onload = function() {
     }
 
     function idle() {
+        while ( snake.length < 3) {
+            growSnake();
+        }
         clearPlayArea();
         drawStats();
         showMessage('Control snake with cursor keys', canvas.height - 60);
@@ -399,19 +396,18 @@ window.onload = function() {
             idleCounter = 0;
         }
         moveSnake();
-        drawSnake();
         drawPlayBorder();
     }
 
     function readCookie(name) {
-        name += "=";
+        name += '=';
         var cookieArray = document.cookie.split(';');
         for (var i in cookieArray) {
             var cookie = cookieArray[i];
             while (cookie.charAt(0) === ' ') {
                 cookie = cookie.substring(1,cookie.length);
             }
-            if (cookie.indexOf(name) == 0) {
+            if (cookie.indexOf(name) === 0) {
                 return cookie.substring(name.length, cookie.length);
             }
         }
@@ -419,14 +415,15 @@ window.onload = function() {
     }
 
     function createCookie(name, value, days) {
+        var expires;
         if (days) {
             var date = new Date();
             date.setTime(date.getTime()+(days*24*60*60*1000));
-            var expires = "; expires="+date.toGMTString();
+            expires = '; expires='+date.toGMTString();
         } else {
-            var expires = "";
+            expires = '';
         }
-        document.cookie = name+"="+value+expires+"; path=/";
+        document.cookie = name+'='+value+expires+'; path=/';
     }
 
 };
